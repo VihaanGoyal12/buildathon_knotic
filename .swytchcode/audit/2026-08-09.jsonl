@@ -1,0 +1,4 @@
+{"execution_id":"SWY-ERR-8A1D4F","timestamp":"2026-08-09T07:46:41Z","tool":"","outcome":"error","duration_ms":0,"error_tag":"SWY-ERR-8A1D4F","error_category":"internal"}
+{"execution_id":"exec_1786263103550355000","timestamp":"2026-08-09T08:11:43Z","project":"buildathon","tool":"gmail.user.messages.get","outcome":"failure","duration_ms":1505,"demo":true}
+{"execution_id":"exec_1786263109257722000","timestamp":"2026-08-09T08:11:49Z","project":"buildathon","tool":"gmail.user.messages.get","outcome":"failure","duration_ms":1505,"demo":true}
+{"execution_id":"exec_1786263114272418000","timestamp":"2026-08-09T08:11:54Z","project":"buildathon","tool":"gmail.user.messages.get","outcome":"success","duration_ms":6}

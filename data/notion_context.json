@@ -1,0 +1,40 @@
+{
+  "clients": [
+    {
+      "id": "client_abc_corp",
+      "name": "ABC Corp",
+      "priority": "High",
+      "notes": "ABC Corp is a high-priority enterprise client. The contract renewal is due this week and must be resolved before the upcoming alignment meetings.",
+      "contactPerson": "Alice Smith",
+      "projects": ["Contract Renewal", "Q3 Deliverables"]
+    },
+    {
+      "id": "client_xyz_tech",
+      "name": "XYZ Tech",
+      "priority": "Medium",
+      "notes": "XYZ Tech is currently migrating to our new API version. Keep track of any technical blocker emails from their team.",
+      "contactPerson": "Bob Johnson",
+      "projects": ["API Integration"]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj_contract_renewal",
+      "name": "Contract Renewal",
+      "status": "In Progress",
+      "dueDate": "2026-08-14",
+      "summary": "Finalizing the terms for the 2-year service renewal with ABC Corp. Budget and SLA terms are the main points of discussion."
+    },
+    {
+      "id": "proj_api_integration",
+      "name": "API Integration",
+      "status": "Planning",
+      "dueDate": "2026-09-01",
+      "summary": "Technical onboarding of XYZ Tech team onto the new GraphQL gateway."
+    }
+  ],
+  "preferences": {
+    "briefingTime": "08:00 AM",
+    "focusAreas": ["Contract Renewal", "Urgent Client Communications", "Meeting Conflicts"]
+  }
+}

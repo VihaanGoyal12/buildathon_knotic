@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chief of Staff | Executive Assistant</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" onerror="this.remove()">
+  <style>
+    /* Fallback fonts if Google Fonts are unavailable */
+    :root { --font-heading: 'Outfit', system-ui, -apple-system, sans-serif; --font-body: 'Inter', system-ui, -apple-system, sans-serif; }
+  </style>
+  <!-- CSS Styling -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <!-- Background glow effects -->
+  <div class="glow-bg glow-1"></div>
+  <div class="glow-bg glow-2"></div>
+
+  <!-- Dashboard Container -->
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <div class="logo-icon">✨</div>
+        <div class="logo-text">
+          <h1>Aegis AI</h1>
+          <span>Chief of Staff</span>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <div class="date-badge" id="today-date">Sunday, Aug 9, 2026</div>
+        <button class="btn btn-primary" id="btn-refresh">
+          <span class="btn-icon">🔄</span> Refresh Briefing
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+    <main class="dashboard-grid">
+      
+      <!-- Left Column: Executive Summary & Priorities -->
+      <div class="grid-col col-left">
+        
+        <!-- Section: Executive Summary -->
+        <section class="card summary-card fade-in">
+          <div class="card-header">
+            <h2>Morning Briefing Summary</h2>
+            <span class="badge badge-pulse">AI Generated</span>
+          </div>
+          <div class="card-body">
+            <p id="executive-summary" class="summary-text">Loading your briefing summary...</p>
+          </div>
+        </section>
+
+        <!-- Section: Top Priorities -->
+        <section class="card priorities-card fade-in">
+          <div class="card-header">
+            <h2>Today's Key Priorities</h2>
+            <span class="badge">Joined Context</span>
+          </div>
+          <div class="card-body" id="priorities-container">
+            <!-- Dynamic priorities insert here -->
+            <div class="loading-state">Analyzing communications and calendar...</div>
+          </div>
+        </section>
+        
+        <!-- Section: Notion Context -->
+        <section class="card notion-card fade-in">
+          <div class="card-header">
+            <h2>Notion Context Database</h2>
+            <span class="badge badge-notion">Organizational Knowledge</span>
+          </div>
+          <div class="card-body">
+            <div class="notion-grid" id="notion-container">
+              <!-- Notion clients context inserts here -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Schedule, Conflicts, Emails & Action items -->
+      <div class="grid-col col-right">
+        
+        <!-- Section: Today's Schedule & Conflicts -->
+        <section class="card schedule-card fade-in">
+          <div class="card-header">
+            <h2>Today's Schedule</h2>
+            <span class="badge badge-calendar">Google Calendar</span>
+          </div>
+          <div class="card-body">
+            <!-- Conflict Alert Box -->
+            <div class="conflict-alert" id="conflict-box" style="display: none;">
+              <div class="conflict-alert-title">⚠️ Schedule Conflict Detected</div>
+              <div id="conflict-list"></div>
+            </div>
+            
+            <div class="timeline" id="schedule-container">
+              <!-- Timeline events insert here -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Section: Urgent Actions required (Gmail) -->
+        <section class="card emails-card fade-in">
+          <div class="card-header">
+            <h2>Urgent Communications</h2>
+            <span class="badge badge-gmail">Gmail</span>
+          </div>
+          <div class="card-body" id="emails-container">
+            <!-- Emails insert here -->
+          </div>
+        </section>
+
+        <!-- Section: Interactive Checklists -->
+        <section class="card actions-card fade-in">
+          <div class="card-header">
+            <h2>Recommended Next Actions</h2>
+            <span class="badge">Interactive</span>
+          </div>
+          <div class="card-body">
+            <ul class="action-checklist" id="actions-container">
+              <!-- Action checklist items insert here -->
+            </ul>
+          </div>
+        </section>
+
+        <!-- Section: Dispatch Email Delivery -->
+        <section class="card send-email-card fade-in">
+          <div class="card-header">
+            <h2>Dispatch Executive Briefing</h2>
+            <span class="badge badge-send">Swytchcode Mailer</span>
+          </div>
+          <div class="card-body">
+            <p class="send-desc">Send a clean HTML copy of this morning's briefing to your email.</p>
+            <div class="send-form">
+              <input type="email" id="email-input" class="form-input" value="executive@example.com" placeholder="Enter recipient email">
+              <button class="btn btn-action" id="btn-send-email">
+                📧 Email Briefing
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Logic -->
+  <script src="index.js"></script>
+</body>
+</html>

@@ -1,7 +1,2123 @@
 {
   "editor": "gemini",
-  "integrations": {},
+  "integrations": {
+    "Gmail.gmail": {
+      "version": "v1"
+    },
+    "Google Calendar.calendar": {
+      "version": "v3"
+    }
+  },
   "mode": "production",
-  "tools": {},
+  "tools": {
+    "calendar.event.get": {
+      "desc": "Returns events on the specified calendar.",
+      "inputs": [
+        {
+          "calendarId": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "alwaysIncludeEmail": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "BOOL"
+          }
+        },
+        {
+          "eventTypes": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "[]ANY"
+          }
+        },
+        {
+          "iCalUID": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "maxAttendees": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "INT"
+          }
+        },
+        {
+          "maxResults": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "INT"
+          }
+        },
+        {
+          "orderBy": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "pageToken": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "privateExtendedProperty": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "[]ANY"
+          }
+        },
+        {
+          "q": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "sharedExtendedProperty": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "[]ANY"
+          }
+        },
+        {
+          "showDeleted": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "BOOL"
+          }
+        },
+        {
+          "showHiddenInvitations": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "BOOL"
+          }
+        },
+        {
+          "singleEvents": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "BOOL"
+          }
+        },
+        {
+          "syncToken": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "timeMax": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "timeMin": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "timeZone": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "updatedMin": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        }
+      ],
+      "integration": "Google Calendar.calendar@v3",
+      "method_hash": "cdf4f0c6f6c5d3e2c5681fff607bb0e281d824044cbaa12ce7727418639fe17e",
+      "output": {
+        "schema": {
+          "properties": {
+            "accessRole": {
+              "required": false,
+              "type": "string"
+            },
+            "defaultReminders": {
+              "items": {
+                "properties": {
+                  "method": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "minutes": {
+                    "required": false,
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "description": {
+              "required": false,
+              "type": "string"
+            },
+            "etag": {
+              "required": false,
+              "type": "string"
+            },
+            "items": {
+              "items": {
+                "properties": {
+                  "anyoneCanAddSelf": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "attachments": {
+                    "items": {
+                      "properties": {
+                        "fileId": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "fileUrl": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "iconLink": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "mimeType": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "title": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "required": false,
+                    "type": "array"
+                  },
+                  "attendees": {
+                    "items": {
+                      "properties": {
+                        "additionalGuests": {
+                          "required": false,
+                          "type": "integer"
+                        },
+                        "asyncOperation": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "comment": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "email": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "id": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "optional": {
+                          "required": false,
+                          "type": "boolean"
+                        },
+                        "organizer": {
+                          "required": false,
+                          "type": "boolean"
+                        },
+                        "resource": {
+                          "required": false,
+                          "type": "boolean"
+                        },
+                        "responseStatus": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "self": {
+                          "required": false,
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "required": false,
+                    "type": "array"
+                  },
+                  "attendeesOmitted": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "birthdayProperties": {
+                    "properties": {
+                      "contact": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "customTypeName": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "type": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "colorId": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "conferenceData": {
+                    "properties": {
+                      "conferenceId": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "conferenceSolution": {
+                        "properties": {
+                          "iconUri": {
+                            "required": false,
+                            "type": "string"
+                          },
+                          "key": {
+                            "properties": {
+                              "type": {
+                                "required": false,
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "name": {
+                            "required": false,
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "createRequest": {
+                        "properties": {
+                          "conferenceSolutionKey": {
+                            "properties": {
+                              "type": {
+                                "required": false,
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "requestId": {
+                            "required": false,
+                            "type": "string"
+                          },
+                          "status": {
+                            "properties": {
+                              "statusCode": {
+                                "required": false,
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "entryPoints": {
+                        "items": {
+                          "properties": {
+                            "accessCode": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "entryPointFeatures": {
+                              "required": false,
+                              "type": "[]STRING"
+                            },
+                            "entryPointType": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "label": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "meetingCode": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "passcode": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "password": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "pin": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "regionCode": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "uri": {
+                              "required": false,
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "required": false,
+                        "type": "array"
+                      },
+                      "notes": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "parameters": {
+                        "properties": {
+                          "addOnParameters": {
+                            "properties": {
+                              "parameters": {
+                                "required": false,
+                                "type": "map[STRING]STRING"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "signature": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "created": {
+                    "required": false,
+                    "type": "TIMESTAMP"
+                  },
+                  "creator": {
+                    "required": false,
+                    "type": "object"
+                  },
+                  "description": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "end": {
+                    "properties": {
+                      "date": {
+                        "required": false,
+                        "type": "DATE"
+                      },
+                      "dateTime": {
+                        "required": false,
+                        "type": "TIMESTAMP"
+                      },
+                      "timeZone": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "endTimeUnspecified": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "etag": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "eventLabelId": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "eventType": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "extendedProperties": {
+                    "required": false,
+                    "type": "object"
+                  },
+                  "focusTimeProperties": {
+                    "properties": {
+                      "autoDeclineMode": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "chatStatus": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "declineMessage": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "gadget": {
+                    "required": false,
+                    "type": "object"
+                  },
+                  "guestsCanInviteOthers": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "guestsCanModify": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "guestsCanSeeOtherGuests": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "hangoutLink": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "htmlLink": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "iCalUID": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "id": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "kind": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "location": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "locked": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "organizer": {
+                    "required": false,
+                    "type": "object"
+                  },
+                  "originalStartTime": {
+                    "properties": {
+                      "date": {
+                        "required": false,
+                        "type": "DATE"
+                      },
+                      "dateTime": {
+                        "required": false,
+                        "type": "TIMESTAMP"
+                      },
+                      "timeZone": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "outOfOfficeProperties": {
+                    "properties": {
+                      "autoDeclineMode": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "declineMessage": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "privateCopy": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "recurrence": {
+                    "required": false,
+                    "type": "[]STRING"
+                  },
+                  "recurringEventId": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "reminders": {
+                    "required": false,
+                    "type": "object"
+                  },
+                  "sequence": {
+                    "required": false,
+                    "type": "integer"
+                  },
+                  "source": {
+                    "required": false,
+                    "type": "object"
+                  },
+                  "start": {
+                    "properties": {
+                      "date": {
+                        "required": false,
+                        "type": "DATE"
+                      },
+                      "dateTime": {
+                        "required": false,
+                        "type": "TIMESTAMP"
+                      },
+                      "timeZone": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "status": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "summary": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "transparency": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "updated": {
+                    "required": false,
+                    "type": "TIMESTAMP"
+                  },
+                  "visibility": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "workingLocationProperties": {
+                    "properties": {
+                      "customLocation": {
+                        "required": false,
+                        "type": "object"
+                      },
+                      "homeOffice": {
+                        "required": false,
+                        "type": "any"
+                      },
+                      "officeLocation": {
+                        "required": false,
+                        "type": "object"
+                      },
+                      "type": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "kind": {
+              "required": false,
+              "type": "string"
+            },
+            "nextPageToken": {
+              "required": false,
+              "type": "string"
+            },
+            "nextSyncToken": {
+              "required": false,
+              "type": "string"
+            },
+            "summary": {
+              "required": false,
+              "type": "string"
+            },
+            "timeZone": {
+              "required": false,
+              "type": "string"
+            },
+            "updated": {
+              "required": false,
+              "type": "TIMESTAMP"
+            }
+          }
+        },
+        "status": 200
+      },
+      "summary": "Returns events on the specified calendar.",
+      "type": "method"
+    },
+    "calendar.event.get.1": {
+      "desc": "Returns an event based on its Google Calendar ID. To retrieve an event using its iCalendar ID, call the events.list method using the iCalUID parameter.",
+      "inputs": [
+        {
+          "calendarId": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "eventId": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "alwaysIncludeEmail": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "BOOL"
+          }
+        },
+        {
+          "maxAttendees": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "INT"
+          }
+        },
+        {
+          "timeZone": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        }
+      ],
+      "integration": "Google Calendar.calendar@v3",
+      "method_hash": "d29f9377c0b8049e9e64b3ec5e39012042eec3124dfce72c697158c045613671",
+      "output": {
+        "schema": {
+          "properties": {
+            "anyoneCanAddSelf": {
+              "required": false,
+              "type": "boolean"
+            },
+            "attachments": {
+              "items": {
+                "properties": {
+                  "fileId": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "fileUrl": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "iconLink": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "mimeType": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "title": {
+                    "required": false,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "attendees": {
+              "items": {
+                "properties": {
+                  "additionalGuests": {
+                    "required": false,
+                    "type": "integer"
+                  },
+                  "asyncOperation": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "comment": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "email": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "id": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "optional": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "organizer": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "resource": {
+                    "required": false,
+                    "type": "boolean"
+                  },
+                  "responseStatus": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "self": {
+                    "required": false,
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "attendeesOmitted": {
+              "required": false,
+              "type": "boolean"
+            },
+            "birthdayProperties": {
+              "properties": {
+                "contact": {
+                  "required": false,
+                  "type": "string"
+                },
+                "customTypeName": {
+                  "required": false,
+                  "type": "string"
+                },
+                "type": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "colorId": {
+              "required": false,
+              "type": "string"
+            },
+            "conferenceData": {
+              "properties": {
+                "conferenceId": {
+                  "required": false,
+                  "type": "string"
+                },
+                "conferenceSolution": {
+                  "properties": {
+                    "iconUri": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "key": {
+                      "properties": {
+                        "type": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "name": {
+                      "required": false,
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "createRequest": {
+                  "properties": {
+                    "conferenceSolutionKey": {
+                      "properties": {
+                        "type": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "status": {
+                      "properties": {
+                        "statusCode": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "entryPoints": {
+                  "items": {
+                    "properties": {
+                      "accessCode": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "entryPointFeatures": {
+                        "required": false,
+                        "type": "[]STRING"
+                      },
+                      "entryPointType": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "label": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "meetingCode": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "passcode": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "password": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "pin": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "regionCode": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "uri": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                },
+                "notes": {
+                  "required": false,
+                  "type": "string"
+                },
+                "parameters": {
+                  "properties": {
+                    "addOnParameters": {
+                      "properties": {
+                        "parameters": {
+                          "required": false,
+                          "type": "map[STRING]STRING"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "signature": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "created": {
+              "required": false,
+              "type": "TIMESTAMP"
+            },
+            "creator": {
+              "required": false,
+              "type": "object"
+            },
+            "description": {
+              "required": false,
+              "type": "string"
+            },
+            "end": {
+              "properties": {
+                "date": {
+                  "required": false,
+                  "type": "DATE"
+                },
+                "dateTime": {
+                  "required": false,
+                  "type": "TIMESTAMP"
+                },
+                "timeZone": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "endTimeUnspecified": {
+              "required": false,
+              "type": "boolean"
+            },
+            "etag": {
+              "required": false,
+              "type": "string"
+            },
+            "eventLabelId": {
+              "required": false,
+              "type": "string"
+            },
+            "eventType": {
+              "required": false,
+              "type": "string"
+            },
+            "extendedProperties": {
+              "required": false,
+              "type": "object"
+            },
+            "focusTimeProperties": {
+              "properties": {
+                "autoDeclineMode": {
+                  "required": false,
+                  "type": "string"
+                },
+                "chatStatus": {
+                  "required": false,
+                  "type": "string"
+                },
+                "declineMessage": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "gadget": {
+              "required": false,
+              "type": "object"
+            },
+            "guestsCanInviteOthers": {
+              "required": false,
+              "type": "boolean"
+            },
+            "guestsCanModify": {
+              "required": false,
+              "type": "boolean"
+            },
+            "guestsCanSeeOtherGuests": {
+              "required": false,
+              "type": "boolean"
+            },
+            "hangoutLink": {
+              "required": false,
+              "type": "string"
+            },
+            "htmlLink": {
+              "required": false,
+              "type": "string"
+            },
+            "iCalUID": {
+              "required": false,
+              "type": "string"
+            },
+            "id": {
+              "required": false,
+              "type": "string"
+            },
+            "kind": {
+              "required": false,
+              "type": "string"
+            },
+            "location": {
+              "required": false,
+              "type": "string"
+            },
+            "locked": {
+              "required": false,
+              "type": "boolean"
+            },
+            "organizer": {
+              "required": false,
+              "type": "object"
+            },
+            "originalStartTime": {
+              "properties": {
+                "date": {
+                  "required": false,
+                  "type": "DATE"
+                },
+                "dateTime": {
+                  "required": false,
+                  "type": "TIMESTAMP"
+                },
+                "timeZone": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "outOfOfficeProperties": {
+              "properties": {
+                "autoDeclineMode": {
+                  "required": false,
+                  "type": "string"
+                },
+                "declineMessage": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "privateCopy": {
+              "required": false,
+              "type": "boolean"
+            },
+            "recurrence": {
+              "required": false,
+              "type": "[]STRING"
+            },
+            "recurringEventId": {
+              "required": false,
+              "type": "string"
+            },
+            "reminders": {
+              "required": false,
+              "type": "object"
+            },
+            "sequence": {
+              "required": false,
+              "type": "integer"
+            },
+            "source": {
+              "required": false,
+              "type": "object"
+            },
+            "start": {
+              "properties": {
+                "date": {
+                  "required": false,
+                  "type": "DATE"
+                },
+                "dateTime": {
+                  "required": false,
+                  "type": "TIMESTAMP"
+                },
+                "timeZone": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "status": {
+              "required": false,
+              "type": "string"
+            },
+            "summary": {
+              "required": false,
+              "type": "string"
+            },
+            "transparency": {
+              "required": false,
+              "type": "string"
+            },
+            "updated": {
+              "required": false,
+              "type": "TIMESTAMP"
+            },
+            "visibility": {
+              "required": false,
+              "type": "string"
+            },
+            "workingLocationProperties": {
+              "properties": {
+                "customLocation": {
+                  "required": false,
+                  "type": "object"
+                },
+                "homeOffice": {
+                  "required": false,
+                  "type": "any"
+                },
+                "officeLocation": {
+                  "required": false,
+                  "type": "object"
+                },
+                "type": {
+                  "required": false,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "status": 200
+      },
+      "summary": "Returns an event based on its Google Calendar ID",
+      "type": "method"
+    },
+    "gmail.user.messages.get": {
+      "desc": "Lists the messages in the user's mailbox. For more information, see [List Gmail messages](https://developers.google.com/workspace/gmail/api/guides/list-messages).",
+      "inputs": [
+        {
+          "userId": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "includeSpamTrash": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "BOOL"
+          }
+        },
+        {
+          "labelIds": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "[]ANY"
+          }
+        },
+        {
+          "maxResults": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "INT"
+          }
+        },
+        {
+          "pageToken": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "q": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        }
+      ],
+      "integration": "Gmail.gmail@v1",
+      "method_hash": "79eb34c1a163c710e360e0175732f42a97d25ae1f510b87f7f0f818209f28569",
+      "output": {
+        "schema": {
+          "properties": {
+            "messages": {
+              "items": {
+                "properties": {
+                  "classificationLabelValues": {
+                    "items": {
+                      "properties": {
+                        "fields": {
+                          "items": {
+                            "properties": {
+                              "fieldId": {
+                                "required": false,
+                                "type": "string"
+                              },
+                              "selection": {
+                                "required": false,
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "required": false,
+                          "type": "array"
+                        },
+                        "labelId": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "required": false,
+                    "type": "array"
+                  },
+                  "historyId": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "id": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "internalDate": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "labelIds": {
+                    "required": false,
+                    "type": "[]STRING"
+                  },
+                  "payload": {
+                    "properties": {
+                      "body": {
+                        "properties": {
+                          "attachmentId": {
+                            "required": false,
+                            "type": "string"
+                          },
+                          "data": {
+                            "required": false,
+                            "type": "string"
+                          },
+                          "size": {
+                            "required": false,
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "filename": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "headers": {
+                        "items": {
+                          "properties": {
+                            "name": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "value": {
+                              "required": false,
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "required": false,
+                        "type": "array"
+                      },
+                      "mimeType": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "partId": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "parts": {
+                        "items": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "required": false,
+                        "type": "array"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "raw": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "sizeEstimate": {
+                    "required": false,
+                    "type": "integer"
+                  },
+                  "snippet": {
+                    "required": false,
+                    "type": "string"
+                  },
+                  "threadId": {
+                    "required": false,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "nextPageToken": {
+              "required": false,
+              "type": "string"
+            },
+            "resultSizeEstimate": {
+              "required": false,
+              "type": "integer"
+            }
+          }
+        },
+        "status": 200
+      },
+      "summary": "Lists the messages in the user's mailbox",
+      "type": "method"
+    },
+    "gmail.user.messages.get1": {
+      "desc": "Gets the specified message.",
+      "inputs": [
+        {
+          "userId": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "id": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "format": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "metadataHeaders": {
+            "LOCATION": "query",
+            "REQUIRED": false,
+            "TYPE": "[]ANY"
+          }
+        }
+      ],
+      "integration": "Gmail.gmail@v1",
+      "method_hash": "1e665edf485741a7ffaf3c058e10c04d3c9815ec11ed2f9a071ebecaeac83291",
+      "output": {
+        "schema": {
+          "properties": {
+            "classificationLabelValues": {
+              "items": {
+                "properties": {
+                  "fields": {
+                    "items": {
+                      "properties": {
+                        "fieldId": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "selection": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "required": false,
+                    "type": "array"
+                  },
+                  "labelId": {
+                    "required": false,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "historyId": {
+              "required": false,
+              "type": "string"
+            },
+            "id": {
+              "required": false,
+              "type": "string"
+            },
+            "internalDate": {
+              "required": false,
+              "type": "string"
+            },
+            "labelIds": {
+              "required": false,
+              "type": "[]STRING"
+            },
+            "payload": {
+              "properties": {
+                "body": {
+                  "properties": {
+                    "attachmentId": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "data": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "size": {
+                      "required": false,
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "filename": {
+                  "required": false,
+                  "type": "string"
+                },
+                "headers": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "value": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                },
+                "mimeType": {
+                  "required": false,
+                  "type": "string"
+                },
+                "partId": {
+                  "required": false,
+                  "type": "string"
+                },
+                "parts": {
+                  "items": {
+                    "properties": {},
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "raw": {
+              "required": false,
+              "type": "string"
+            },
+            "sizeEstimate": {
+              "required": false,
+              "type": "integer"
+            },
+            "snippet": {
+              "required": false,
+              "type": "string"
+            },
+            "threadId": {
+              "required": false,
+              "type": "string"
+            }
+          }
+        },
+        "status": 200
+      },
+      "summary": "Gets the specified message.",
+      "type": "method"
+    },
+    "gmail.user.send.create": {
+      "desc": "Sends the specified, existing draft to the recipients in the `To`, `Cc`, and `Bcc` headers. For more information, see [Create and send draft emails](https://developers.google.com/workspace/gmail/api/guides/drafts).",
+      "inputs": [
+        {
+          "userId": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "body": {
+            "LOCATION": "body",
+            "REQUIRED": false,
+            "TYPE": "OBJECT",
+            "schema": {
+              "properties": {
+                "id": {
+                  "required": false,
+                  "type": "string"
+                },
+                "message": {
+                  "properties": {
+                    "classificationLabelValues": {
+                      "items": {
+                        "properties": {
+                          "fields": {
+                            "items": {
+                              "properties": {
+                                "fieldId": {
+                                  "required": false,
+                                  "type": "string"
+                                },
+                                "selection": {
+                                  "required": false,
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "required": false,
+                            "type": "array"
+                          },
+                          "labelId": {
+                            "required": false,
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "required": false,
+                      "type": "array"
+                    },
+                    "historyId": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "id": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "internalDate": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "labelIds": {
+                      "required": false,
+                      "type": "[]STRING"
+                    },
+                    "payload": {
+                      "properties": {
+                        "body": {
+                          "properties": {
+                            "attachmentId": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "data": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "size": {
+                              "required": false,
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "filename": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "headers": {
+                          "items": {
+                            "properties": {
+                              "name": {
+                                "required": false,
+                                "type": "string"
+                              },
+                              "value": {
+                                "required": false,
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "required": false,
+                          "type": "array"
+                        },
+                        "mimeType": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "partId": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "parts": {
+                          "items": {
+                            "properties": {},
+                            "type": "object"
+                          },
+                          "required": false,
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "raw": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "sizeEstimate": {
+                      "required": false,
+                      "type": "integer"
+                    },
+                    "snippet": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "threadId": {
+                      "required": false,
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "integration": "Gmail.gmail@v1",
+      "method_hash": "ac868f471cba9a42b9f433978039a4c647d5244220a43580ab711faf669873de",
+      "output": {
+        "schema": {
+          "properties": {
+            "classificationLabelValues": {
+              "items": {
+                "properties": {
+                  "fields": {
+                    "items": {
+                      "properties": {
+                        "fieldId": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "selection": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "required": false,
+                    "type": "array"
+                  },
+                  "labelId": {
+                    "required": false,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "historyId": {
+              "required": false,
+              "type": "string"
+            },
+            "id": {
+              "required": false,
+              "type": "string"
+            },
+            "internalDate": {
+              "required": false,
+              "type": "string"
+            },
+            "labelIds": {
+              "required": false,
+              "type": "[]STRING"
+            },
+            "payload": {
+              "properties": {
+                "body": {
+                  "properties": {
+                    "attachmentId": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "data": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "size": {
+                      "required": false,
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "filename": {
+                  "required": false,
+                  "type": "string"
+                },
+                "headers": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "value": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                },
+                "mimeType": {
+                  "required": false,
+                  "type": "string"
+                },
+                "partId": {
+                  "required": false,
+                  "type": "string"
+                },
+                "parts": {
+                  "items": {
+                    "properties": {},
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "raw": {
+              "required": false,
+              "type": "string"
+            },
+            "sizeEstimate": {
+              "required": false,
+              "type": "integer"
+            },
+            "snippet": {
+              "required": false,
+              "type": "string"
+            },
+            "threadId": {
+              "required": false,
+              "type": "string"
+            }
+          }
+        },
+        "status": 200
+      },
+      "summary": "Sends the specified, existing draft to the recipients in the `To`, `Cc`, and `Bcc` headers",
+      "type": "method"
+    },
+    "gmail.user.send.create1": {
+      "desc": "Sends the specified message to the recipients in the `To`, `Cc`, and `Bcc` headers. For more information, see [Create and send email messages](https://developers.google.com/workspace/gmail/api/guides/sending).",
+      "inputs": [
+        {
+          "userId": {
+            "LOCATION": "path",
+            "TYPE": "STRING"
+          }
+        },
+        {
+          "body": {
+            "LOCATION": "body",
+            "REQUIRED": false,
+            "TYPE": "OBJECT",
+            "schema": {
+              "properties": {
+                "classificationLabelValues": {
+                  "items": {
+                    "properties": {
+                      "fields": {
+                        "items": {
+                          "properties": {
+                            "fieldId": {
+                              "required": false,
+                              "type": "string"
+                            },
+                            "selection": {
+                              "required": false,
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "required": false,
+                        "type": "array"
+                      },
+                      "labelId": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                },
+                "historyId": {
+                  "required": false,
+                  "type": "string"
+                },
+                "id": {
+                  "required": false,
+                  "type": "string"
+                },
+                "internalDate": {
+                  "required": false,
+                  "type": "string"
+                },
+                "labelIds": {
+                  "required": false,
+                  "type": "[]STRING"
+                },
+                "payload": {
+                  "properties": {
+                    "body": {
+                      "properties": {
+                        "attachmentId": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "data": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "size": {
+                          "required": false,
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "filename": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "headers": {
+                      "items": {
+                        "properties": {
+                          "name": {
+                            "required": false,
+                            "type": "string"
+                          },
+                          "value": {
+                            "required": false,
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "required": false,
+                      "type": "array"
+                    },
+                    "mimeType": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "partId": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "parts": {
+                      "items": {
+                        "properties": {},
+                        "type": "object"
+                      },
+                      "required": false,
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
+                "raw": {
+                  "required": false,
+                  "type": "string"
+                },
+                "sizeEstimate": {
+                  "required": false,
+                  "type": "integer"
+                },
+                "snippet": {
+                  "required": false,
+                  "type": "string"
+                },
+                "threadId": {
+                  "required": false,
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "integration": "Gmail.gmail@v1",
+      "method_hash": "53f56a0cf2ff8645e1a05c5c5e4910f5fa039d39ea11029f556e6d802071bd82",
+      "output": {
+        "schema": {
+          "properties": {
+            "classificationLabelValues": {
+              "items": {
+                "properties": {
+                  "fields": {
+                    "items": {
+                      "properties": {
+                        "fieldId": {
+                          "required": false,
+                          "type": "string"
+                        },
+                        "selection": {
+                          "required": false,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "required": false,
+                    "type": "array"
+                  },
+                  "labelId": {
+                    "required": false,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "required": false,
+              "type": "array"
+            },
+            "historyId": {
+              "required": false,
+              "type": "string"
+            },
+            "id": {
+              "required": false,
+              "type": "string"
+            },
+            "internalDate": {
+              "required": false,
+              "type": "string"
+            },
+            "labelIds": {
+              "required": false,
+              "type": "[]STRING"
+            },
+            "payload": {
+              "properties": {
+                "body": {
+                  "properties": {
+                    "attachmentId": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "data": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "size": {
+                      "required": false,
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "filename": {
+                  "required": false,
+                  "type": "string"
+                },
+                "headers": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "required": false,
+                        "type": "string"
+                      },
+                      "value": {
+                        "required": false,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                },
+                "mimeType": {
+                  "required": false,
+                  "type": "string"
+                },
+                "partId": {
+                  "required": false,
+                  "type": "string"
+                },
+                "parts": {
+                  "items": {
+                    "properties": {},
+                    "type": "object"
+                  },
+                  "required": false,
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "raw": {
+              "required": false,
+              "type": "string"
+            },
+            "sizeEstimate": {
+              "required": false,
+              "type": "integer"
+            },
+            "snippet": {
+              "required": false,
+              "type": "string"
+            },
+            "threadId": {
+              "required": false,
+              "type": "string"
+            }
+          }
+        },
+        "status": 200
+      },
+      "summary": "Sends the specified message to the recipients in the `To`, `Cc`, and `Bcc` headers",
+      "type": "method"
+    }
+  },
   "version": "2.20.4"
 }

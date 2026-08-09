@@ -1,0 +1,15 @@
+{
+  "name": "aegis-ai-executive-assistant",
+  "version": "1.0.0",
+  "description": "AI-powered Executive Assistant — Swytchcode Buildathon. Connects Gmail, Google Calendar, and Notion via cross-source AI reasoning to generate a prioritised morning briefing.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test_briefing.js"
+  },
+  "keywords": ["ai", "executive-assistant", "gmail", "calendar", "notion", "swytchcode"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}
