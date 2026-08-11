@@ -9,7 +9,8 @@ const envPath = path.join(__dirname, '.env');
 const config = {
   DEMO_MODE: 'true',
   PORT: '3000',
-  GEMINI_API_KEY: ''
+  GEMINI_API_KEY: '',
+  RESEND_API_KEY: ''
 };
 
 if (fs.existsSync(envPath)) {
@@ -29,10 +30,12 @@ if (fs.existsSync(envPath)) {
 const DEMO_MODE = config.DEMO_MODE === 'true';
 const PORT = parseInt(config.PORT || '3000', 10);
 const GEMINI_API_KEY = config.GEMINI_API_KEY || '';
+const RESEND_API_KEY = config.RESEND_API_KEY || '';
 
 console.log(`[Config] DEMO_MODE: ${DEMO_MODE}`);
 console.log(`[Config] PORT: ${PORT}`);
 console.log(`[Config] GEMINI_API_KEY: ${GEMINI_API_KEY ? 'Present' : 'Not Configured'}`);
+console.log(`[Config] RESEND_API_KEY: ${RESEND_API_KEY ? 'Present' : 'Not Configured'}`);
 
 // MIME types for static files
 const MIME_TYPES = {
@@ -82,18 +85,25 @@ function parseJsonBody(req) {
 function execSwytchcode(tool, args) {
   return new Promise((resolve, reject) => {
     const bodyStr = JSON.stringify(args).replace(/'/g, "'\\''");
-    const cmd = `HOME=/Users/vihaangoyal/Desktop/buildathon swytchcode exec ${tool} --body '${bodyStr}' --json`;
+    // HOME must point to real user home so swytchcode can read ~/.swytchcode/auth.json credentials
+    const cmd = `HOME=/Users/vihaangoyal swytchcode exec ${tool} --body '${bodyStr}' --json`;
     console.log(`[Swytchcode] Executing: ${tool}`);
-    exec(cmd, (error, stdout, stderr) => {
+    exec(cmd, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
       if (error) {
         console.error(`[Swytchcode Error] Tool: ${tool}, Stderr: ${stderr}`);
         return reject({ error: error.message, stderr, stdout });
       }
+      // Filter out posthog warning lines that Swytchcode emits to stdout in some environments
+      const cleanedStdout = stdout
+        .split('\n')
+        .filter(line => !line.startsWith('posthog '))
+        .join('\n')
+        .trim();
       try {
-        resolve(JSON.parse(stdout));
+        resolve(JSON.parse(cleanedStdout));
       } catch (parseError) {
-        console.warn(`[Swytchcode Warn] Failed to parse JSON stdout: ${stdout}`);
-        resolve({ raw: stdout, stderr });
+        console.warn(`[Swytchcode Warn] Failed to parse JSON stdout: ${cleanedStdout}`);
+        resolve({ raw: cleanedStdout, stderr });
       }
     });
   });
@@ -177,7 +187,47 @@ const DEMO_CALENDAR_DATA = [
   }
 ];
 
-// Helper: Local Semantic Reasoning Engine
+// Helper: Extract plain-text body from a real Gmail message payload (handles MIME multipart)
+function extractEmailBody(payload) {
+  if (!payload) return '';
+
+  // Decode base64url to UTF-8 string
+  const decodeBase64 = (data) => {
+    try {
+      return Buffer.from(data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+    } catch (e) {
+      return '';
+    }
+  };
+
+  // Recursively search for text/plain or text/html parts
+  const findTextPart = (part, preferMime) => {
+    if (!part) return null;
+    if (part.mimeType === preferMime && part.body && part.body.data) {
+      return decodeBase64(part.body.data);
+    }
+    if (part.parts) {
+      for (const subPart of part.parts) {
+        const found = findTextPart(subPart, preferMime);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // Prefer plain text, fall back to HTML (strip tags)
+  let body = findTextPart(payload, 'text/plain');
+  if (!body) {
+    const html = findTextPart(payload, 'text/html');
+    if (html) {
+      // Strip HTML tags for a readable snippet
+      body = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+  }
+  return (body || '').substring(0, 1000); // Cap at 1000 chars for analysis
+}
+
+// Helper: Local Semantic Reasoning Engine (fully data-driven, works with real emails)
 function runLocalReasoning(emails, meetings, notion) {
   console.log("[AI Engine] Running Local Rule-Based Semantic Reasoning");
   const briefing = {
@@ -195,7 +245,7 @@ function runLocalReasoning(emails, meetings, notion) {
   meetings.forEach(evt => {
     briefing.todaySchedule.push({
       id: evt.id,
-      summary: evt.summary,
+      summary: evt.summary || '(No title)',
       description: evt.description || "No description provided.",
       start: evt.start.dateTime || evt.start.date,
       end: evt.end.dateTime || evt.end.date,
@@ -215,8 +265,6 @@ function runLocalReasoning(emails, meetings, notion) {
       const aEnd = new Date(a.end);
       const bStart = new Date(b.start);
       const bEnd = new Date(b.end);
-
-      // Check overlap
       if (aStart < bEnd && bStart < aEnd) {
         briefing.conflicts.push({
           event1: a.summary,
@@ -228,112 +276,149 @@ function runLocalReasoning(emails, meetings, notion) {
     }
   }
 
-  // 3. Process Emails and Extract Context/Urgency
+  // 3. Process Emails — extract headers, snippet, body, urgency
   emails.forEach(msg => {
+    if (!msg || !msg.payload || !msg.payload.headers) return;
     const headers = msg.payload.headers;
-    const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject');
-    const fromHeader = headers.find(h => h.name.toLowerCase() === 'from');
-    
-    const subject = subjectHeader ? subjectHeader.value : 'No Subject';
-    const from = fromHeader ? fromHeader.value : 'Unknown Sender';
-    const date = msg.internalDate;
+    const subject = (headers.find(h => h.name.toLowerCase() === 'subject')?.value) || 'No Subject';
+    const from    = (headers.find(h => h.name.toLowerCase() === 'from')?.value) || 'Unknown Sender';
+    const to      = (headers.find(h => h.name.toLowerCase() === 'to')?.value) || '';
+    const date    = msg.internalDate;
+
+    // Use the snippet first; supplement with extracted body if available
+    const bodyText = extractEmailBody(msg.payload);
+    const analysisText = (msg.snippet || '') + ' ' + bodyText;
 
     const emailObj = {
       id: msg.id,
+      threadId: msg.threadId,
       from,
+      to,
       subject,
-      snippet: msg.snippet,
-      date: new Date(date).toISOString(),
+      snippet: msg.snippet || bodyText.substring(0, 200),
+      labels: msg.labelIds || [],
+      date: new Date(parseInt(date, 10)).toISOString(),
       isUrgent: false
     };
 
-    // Urgency heuristic
-    const lowerSub = subject.toLowerCase();
-    const lowerBody = msg.snippet.toLowerCase();
-    if (
-      lowerSub.includes('urgent') || 
-      lowerSub.includes('blocker') || 
-      lowerSub.includes('action required') ||
-      lowerBody.includes('urgent') || 
-      lowerBody.includes('asap') ||
-      lowerBody.includes('blocker')
-    ) {
+    // Urgency heuristic — keyword detection across subject + body
+    const lowerSub  = subject.toLowerCase();
+    const lowerText = analysisText.toLowerCase();
+    const urgencyKeywords = [
+      'urgent', 'asap', 'blocker', 'action required', 'immediately',
+      'critical', 'deadline', 'overdue', 'follow up', 'follow-up',
+      'important', 'time sensitive', 'time-sensitive', 'priority'
+    ];
+    if (urgencyKeywords.some(kw => lowerSub.includes(kw) || lowerText.includes(kw))) {
       emailObj.isUrgent = true;
       briefing.urgentEmails.push(emailObj);
     }
   });
 
-  // 4. Cross-Source Priority Linking (Gmail + Calendar + Notion)
-  // Join logic matches email text/senders, meeting summaries, and Notion client lists
-  notion.clients.forEach(client => {
+  // 4. Cross-Source Priority Linking (Gmail + Calendar + Notion clients)
+  const notionClients = (notion && notion.clients) ? notion.clients : [];
+  notionClients.forEach(client => {
     const clientName = client.name.toLowerCase();
-    
-    // Find related emails
+
     const relatedEmails = emails.filter(msg => {
+      if (!msg || !msg.payload || !msg.payload.headers) return false;
       const headers = msg.payload.headers;
-      const sub = (headers.find(h => h.name.toLowerCase() === 'subject')?.value || '').toLowerCase();
+      const sub  = (headers.find(h => h.name.toLowerCase() === 'subject')?.value || '').toLowerCase();
       const from = (headers.find(h => h.name.toLowerCase() === 'from')?.value || '').toLowerCase();
-      const body = msg.snippet.toLowerCase();
+      const body = (msg.snippet || '').toLowerCase();
       return from.includes(clientName) || sub.includes(clientName) || body.includes(clientName);
     });
 
-    // Find related meetings
     const relatedMeetings = meetings.filter(evt => {
-      const summary = (evt.summary || '').toLowerCase();
-      const desc = (evt.description || '').toLowerCase();
+      const summary   = (evt.summary || '').toLowerCase();
+      const desc      = (evt.description || '').toLowerCase();
       const attendees = evt.attendees ? evt.attendees.map(a => a.email.toLowerCase()).join(' ') : '';
       return summary.includes(clientName) || desc.includes(clientName) || attendees.includes(clientName);
     });
 
-    // If related elements exist, form a Top Priority
     if (relatedEmails.length > 0 || relatedMeetings.length > 0) {
+      const firstEmailSubject = relatedEmails.length > 0
+        ? (relatedEmails[0].payload.headers.find(h => h.name.toLowerCase() === 'subject')?.value || null)
+        : null;
+      const firstMeetingSummary = relatedMeetings.length > 0 ? relatedMeetings[0].summary : null;
+
+      // Build context-aware description from actual data
+      const emailContext = relatedEmails.length > 0
+        ? `You have ${relatedEmails.length} email(s) related to ${client.name} — latest: "${firstEmailSubject}".`
+        : '';
+      const meetingContext = relatedMeetings.length > 0
+        ? `You have ${relatedMeetings.length} meeting(s) involving ${client.name} — next: "${firstMeetingSummary}".`
+        : '';
+
       const priorityObj = {
-        title: `${client.name} Priority Item`,
-        level: client.priority,
-        notionContext: client.notes,
-        relatedEmail: relatedEmails.length > 0 ? relatedEmails[0].payload.headers.find(h => h.name.toLowerCase() === 'subject').value : null,
-        relatedMeeting: relatedMeetings.length > 0 ? relatedMeetings[0].summary : null,
-        description: "",
-        recommendedAction: ""
+        title: `${client.name}: ${firstEmailSubject || firstMeetingSummary || 'Active Item'}`,
+        level: client.priority || 'Medium',
+        notionContext: client.notes || '',
+        relatedEmail: firstEmailSubject,
+        relatedMeeting: firstMeetingSummary,
+        description: [emailContext, meetingContext, client.notes ? `Notion context: ${client.notes}` : ''].filter(Boolean).join(' '),
+        recommendedAction: `Review all ${client.name} communications and prepare context. Check if any reply or action is pending.`
       };
 
-      // Construct detailed description & action based on items
-      if (client.name === "ABC Corp") {
-        priorityObj.title = "ABC Corp Contract Renewal Alignment";
-        priorityObj.description = "You have an alignment meeting with ABC Corp today at 11:00 AM. Alice Smith sent an urgent email highlighting a mismatch in the SLA terms (she requested 99.99% uptime instead of the drafted 99.9%). Notion files flag ABC Corp as a High priority client with contract renewal due this week.";
-        priorityObj.recommendedAction = "Review page 4 of the draft contract, update the uptime SLA to 99.99% as requested, and send the revision to Alice Smith before the 11:00 AM meeting.";
-        
-        briefing.recommendedActions.push("Update ABC Corp draft contract SLA term to 99.99% and email it to Alice Smith.");
-        briefing.deadlines.push({
-          item: "ABC Corp Contract SLA Update",
-          due: "Today, 11:00 AM (Before Alignment Meeting)"
-        });
-      } else if (client.name === "XYZ Tech") {
-        priorityObj.title = "XYZ Tech GraphQL API Onboarding Blocker";
-        priorityObj.description = "Bob Johnson from XYZ Tech reported a 'Rate limit exceeded' blocker with the GraphQL gateway. Notion context lists them as onboarding onto the GraphQL gateway. You have a conflicting internal API gateway review meeting starting at 11:30 AM.";
-        priorityObj.recommendedAction = "Review XYZ Tech rate limit thresholds in the gateway config, resolve their blocker, and reschedule the conflicting review session.";
-        
-        briefing.recommendedActions.push("Verify rate limit thresholds for XYZ Tech API gateway configuration.");
-      } else {
-        priorityObj.description = `Active task involving ${client.name}. Linked items: ${relatedMeetings.length} meetings, ${relatedEmails.length} emails.`;
-        priorityObj.recommendedAction = `Review client communication logs and prepare context before the meeting.`;
-      }
+      // Add deadlines from Notion project data
+      const relatedProjects = (notion.projects || []).filter(p =>
+        (p.name || '').toLowerCase().includes(clientName) ||
+        relatedEmails.some(e => (e.snippet || '').toLowerCase().includes((p.name || '').toLowerCase()))
+      );
+      relatedProjects.forEach(proj => {
+        if (proj.dueDate) {
+          briefing.deadlines.push({
+            item: `${client.name}: ${proj.name}`,
+            due: proj.dueDate
+          });
+          briefing.recommendedActions.push(`Review progress on "${proj.name}" for ${client.name} (due ${proj.dueDate}).`);
+        }
+      });
 
       briefing.priorities.push(priorityObj);
     }
   });
 
-  // Sort priorities (High level first)
+  // 5. Surface urgent emails not tied to any Notion client as standalone priorities
+  briefing.urgentEmails.forEach(emailObj => {
+    const alreadyLinked = briefing.priorities.some(p => p.relatedEmail === emailObj.subject);
+    if (!alreadyLinked) {
+      briefing.priorities.push({
+        title: `Urgent: ${emailObj.subject}`,
+        level: 'High',
+        notionContext: '',
+        relatedEmail: emailObj.subject,
+        relatedMeeting: null,
+        description: `Urgent email from ${emailObj.from}: ${emailObj.snippet}`,
+        recommendedAction: `Review and respond to the urgent email from ${emailObj.from} as soon as possible.`
+      });
+      briefing.recommendedActions.push(`Respond to urgent email: "${emailObj.subject}" from ${emailObj.from}.`);
+    }
+  });
+
+  // Sort priorities (High first)
   briefing.priorities.sort((a, b) => {
-    const levels = { "High": 3, "Medium": 2, "Low": 1 };
+    const levels = { 'High': 3, 'Medium': 2, 'Low': 1 };
     return (levels[b.level] || 0) - (levels[a.level] || 0);
   });
 
-  // 5. Generate Executive Summary
-  const prioritySummary = briefing.priorities.map(p => p.title).join(' and ');
-  const conflictText = briefing.conflicts.length > 0 ? ` Note that you have ${briefing.conflicts.length} schedule conflict(s) to address.` : '';
-  
-  briefing.executiveSummary = `Today's briefing focuses on resolving critical items for ${prioritySummary}. You have ${briefing.todaySchedule.length} meetings scheduled, including a high-stakes alignment call with ABC Corp. Alice Smith from ABC Corp has flagged an urgent SLA issue in the draft contract that needs to be addressed before 11:00 AM.${conflictText} We recommend updating the SLA terms first thing this morning.`;
+  // 6. Generate Executive Summary dynamically from real data
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const totalEmails   = emails.length;
+  const urgentCount   = briefing.urgentEmails.length;
+  const meetingCount  = briefing.todaySchedule.length;
+  const conflictCount = briefing.conflicts.length;
+  const priorityCount = briefing.priorities.length;
+
+  const summaryParts = [
+    `Good morning. Today is ${today}.`,
+    totalEmails > 0   ? `Your inbox has ${totalEmails} recent message(s)${urgentCount > 0 ? `, including ${urgentCount} marked urgent` : ''}.` : 'Your inbox is quiet.',
+    meetingCount > 0  ? `You have ${meetingCount} meeting(s) on your calendar today.` : 'No meetings scheduled today.',
+    conflictCount > 0 ? `⚠️ ${conflictCount} schedule conflict(s) detected — review your calendar.` : '',
+    priorityCount > 0 ? `${priorityCount} priority item(s) identified across your email, calendar, and notes.` : 'No cross-source priorities identified.',
+  ].filter(Boolean);
+
+  briefing.executiveSummary = summaryParts.join(' ');
 
   return briefing;
 }
@@ -499,6 +584,17 @@ const server = http.createServer(async (req, res) => {
         notion = { clients: [], projects: [], preferences: {} };
       }
 
+      // Check Notion integration connectivity in Live Mode
+      if (!DEMO_MODE) {
+        try {
+          console.log("[Server] Verifying Notion integration connectivity...");
+          const botUser = await execSwytchcode('notion.me.list', {});
+          console.log(`[Server] Notion Connected! Bot name: ${botUser.name || 'Unknown'}`);
+        } catch (notionErr) {
+          console.warn("[Server Warn] Notion integration connectivity check failed:", notionErr.message || notionErr);
+        }
+      }
+
       // B. Retrieve Gmail and Calendar data (Demo vs Live Swytchcode)
       if (DEMO_MODE) {
         console.log("[Server] Serving Demo Data");
@@ -507,17 +603,33 @@ const server = http.createServer(async (req, res) => {
       } else {
         console.log("[Server] Invoking Swytchcode CLI Subprocesses");
         try {
-          // 1. Fetch Gmail messages
-          const listRes = await execSwytchcode('gmail.user.messages.get', { userId: 'me', maxResults: 5 });
-          if (listRes && listRes.messages) {
-            // Fetch detailed details for each message
+          // 1. Fetch Gmail messages — list first, then fetch each with full format
+          const listRes = await execSwytchcode('gmail.user.messages.get', {
+            userId: 'me',
+            maxResults: 15,
+            // Fetch from INBOX only (excludes spam/trash)
+            labelIds: ['INBOX']
+          });
+          if (listRes && listRes.messages && listRes.messages.length > 0) {
+            console.log(`[Gmail] Found ${listRes.messages.length} messages. Fetching full details...`);
             const detailedEmails = [];
             for (const msg of listRes.messages) {
-              const details = await execSwytchcode('gmail.user.messages.get1', { userId: 'me', id: msg.id });
-              if (details) detailedEmails.push(details);
+              try {
+                // format=full returns complete payload including body parts
+                const details = await execSwytchcode('gmail.user.messages.get1', {
+                  userId: 'me',
+                  id: msg.id,
+                  format: 'full'
+                });
+                if (details && details.payload) detailedEmails.push(details);
+              } catch (msgErr) {
+                console.warn(`[Gmail Warn] Could not fetch message ${msg.id}:`, msgErr.error || msgErr);
+              }
             }
+            console.log(`[Gmail] Successfully fetched ${detailedEmails.length} full messages.`);
             emails = detailedEmails;
           } else {
+            console.log('[Gmail] Inbox is empty or no messages returned.');
             emails = [];
           }
 
@@ -571,36 +683,54 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: `[DEMO] Briefing successfully emailed to ${recipient}` }));
       } else {
-        console.log(`[Server] Sending email to ${recipient} via Swytchcode Gmail`);
-        
-        // Assemble raw RFC 2822 email payload
-        const emailLines = [
-          `To: ${recipient}`,
-          `Subject: Daily Executive Assistant Briefing`,
-          `Content-Type: text/html; charset=utf-8`,
-          `MIME-Version: 1.0`,
-          ``,
-          briefingHtml
-        ].join('\r\n');
+        if (RESEND_API_KEY) {
+          console.log(`[Server] Sending email to ${recipient} via Swytchcode Resend`);
+          // Use resend.email.create
+          // Returns: { id: string }
+          const sendArgs = {
+            "Authorization": `Bearer ${RESEND_API_KEY}`,
+            body: {
+              from: 'onboarding@resend.dev', // Resend default domain sender for sandbox/onboarding
+              to: recipient,
+              subject: 'Daily Executive Assistant Briefing',
+              html: briefingHtml
+            }
+          };
+          const result = await execSwytchcode('resend.email.create', sendArgs);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, message: 'Email sent successfully via Resend API', detail: result }));
+        } else {
+          console.log(`[Server] Sending email to ${recipient} via Swytchcode Gmail`);
+          
+          // Assemble raw RFC 2822 email payload
+          const emailLines = [
+            `To: ${recipient}`,
+            `Subject: Daily Executive Assistant Briefing`,
+            `Content-Type: text/html; charset=utf-8`,
+            `MIME-Version: 1.0`,
+            ``,
+            briefingHtml
+          ].join('\r\n');
 
-        // Base64url encode
-        const rawBase64 = Buffer.from(emailLines)
-          .toString('base64')
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+$/, '');
+          // Base64url encode
+          const rawBase64 = Buffer.from(emailLines)
+            .toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
 
-        // Call Gmail API send message
-        const sendArgs = {
-          userId: 'me',
-          body: {
-            raw: rawBase64
-          }
-        };
+          // Call Gmail API send message
+          const sendArgs = {
+            userId: 'me',
+            body: {
+              raw: rawBase64
+            }
+          };
 
-        const result = await execSwytchcode('gmail.user.send.create1', sendArgs);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'Email sent successfully via Gmail API', detail: result }));
+          const result = await execSwytchcode('gmail.user.send.create1', sendArgs);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, message: 'Email sent successfully via Gmail API', detail: result }));
+        }
       }
     } catch (err) {
       console.error("[API Error] Failed to send email:", err);
