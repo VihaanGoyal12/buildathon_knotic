@@ -7,8 +7,7 @@ const https = require('https');
 // 1. Manually parse .env file
 const envPath = path.join(__dirname, '.env');
 const config = {
-  DEMO_MODE: 'true',
-  PORT: '3000',
+  DEMO_MODE: process.env.DEMO_MODE || 'false',  PORT: '3000',
   GEMINI_API_KEY: '',
   RESEND_API_KEY: ''
 };
