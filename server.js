@@ -7,7 +7,7 @@ const https = require('https');
 // 1. Manually parse .env file
 const envPath = path.join(__dirname, '.env');
 const config = {
-  DEMO_MODE: process.env.DEMO_MODE || 'false',  PORT: '3000',
+  DEMO_MODE: process.env.DEMO_MODE || 'false', PORT: '3000',
   GEMINI_API_KEY: '',
   RESEND_API_KEY: ''
 };
@@ -20,8 +20,13 @@ if (fs.existsSync(envPath)) {
     const parts = trimmed.split('=');
     if (parts.length >= 2) {
       const key = parts[0].trim();
-      const value = parts.slice(1).join('=').trim();
+      let value = parts.slice(1).join('=').trim();
+      // Strip enclosing single or double quotes
+      if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) {
+        value = value.substring(1, value.length - 1);
+      }
       config[key] = value;
+      process.env[key] = value;
     }
   });
 }
@@ -51,7 +56,7 @@ const MIME_TYPES = {
 function serveStaticFile(res, filePath) {
   const ext = path.extname(filePath);
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-  
+
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -83,9 +88,13 @@ function parseJsonBody(req) {
 // Helper: Execute Swytchcode via subprocess
 function execSwytchcode(tool, args) {
   return new Promise((resolve, reject) => {
-    const bodyStr = JSON.stringify(args).replace(/'/g, "'\\''");
+    const payload = {
+      tool: tool,
+      args: args
+    };
+    const payloadStr = JSON.stringify(payload).replace(/'/g, "'\\''");
     // HOME must point to real user home so swytchcode can read ~/.swytchcode/auth.json credentials
-    const cmd = `HOME=/Users/vihaangoyal swytchcode exec ${tool} --body '${bodyStr}' --json`;
+    const cmd = `echo '${payloadStr}' | HOME=/Users/vihaangoyal swytchcode exec --json`;
     console.log(`[Swytchcode] Executing: ${tool}`);
     exec(cmd, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
       if (error) {
@@ -268,7 +277,7 @@ function runLocalReasoning(emails, meetings, notion) {
         briefing.conflicts.push({
           event1: a.summary,
           event2: b.summary,
-          timeRange: `${new Date(a.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(a.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} vs ${new Date(b.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(b.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`,
+          timeRange: `${new Date(a.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(a.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} vs ${new Date(b.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(b.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           resolution: `Reschedule "${b.summary}" or shorten "${a.summary}" to resolve the overlap.`
         });
       }
@@ -280,9 +289,9 @@ function runLocalReasoning(emails, meetings, notion) {
     if (!msg || !msg.payload || !msg.payload.headers) return;
     const headers = msg.payload.headers;
     const subject = (headers.find(h => h.name.toLowerCase() === 'subject')?.value) || 'No Subject';
-    const from    = (headers.find(h => h.name.toLowerCase() === 'from')?.value) || 'Unknown Sender';
-    const to      = (headers.find(h => h.name.toLowerCase() === 'to')?.value) || '';
-    const date    = msg.internalDate;
+    const from = (headers.find(h => h.name.toLowerCase() === 'from')?.value) || 'Unknown Sender';
+    const to = (headers.find(h => h.name.toLowerCase() === 'to')?.value) || '';
+    const date = msg.internalDate;
 
     // Use the snippet first; supplement with extracted body if available
     const bodyText = extractEmailBody(msg.payload);
@@ -301,7 +310,7 @@ function runLocalReasoning(emails, meetings, notion) {
     };
 
     // Urgency heuristic — keyword detection across subject + body
-    const lowerSub  = subject.toLowerCase();
+    const lowerSub = subject.toLowerCase();
     const lowerText = analysisText.toLowerCase();
     const urgencyKeywords = [
       'urgent', 'asap', 'blocker', 'action required', 'immediately',
@@ -322,15 +331,15 @@ function runLocalReasoning(emails, meetings, notion) {
     const relatedEmails = emails.filter(msg => {
       if (!msg || !msg.payload || !msg.payload.headers) return false;
       const headers = msg.payload.headers;
-      const sub  = (headers.find(h => h.name.toLowerCase() === 'subject')?.value || '').toLowerCase();
+      const sub = (headers.find(h => h.name.toLowerCase() === 'subject')?.value || '').toLowerCase();
       const from = (headers.find(h => h.name.toLowerCase() === 'from')?.value || '').toLowerCase();
       const body = (msg.snippet || '').toLowerCase();
       return from.includes(clientName) || sub.includes(clientName) || body.includes(clientName);
     });
 
     const relatedMeetings = meetings.filter(evt => {
-      const summary   = (evt.summary || '').toLowerCase();
-      const desc      = (evt.description || '').toLowerCase();
+      const summary = (evt.summary || '').toLowerCase();
+      const desc = (evt.description || '').toLowerCase();
       const attendees = evt.attendees ? evt.attendees.map(a => a.email.toLowerCase()).join(' ') : '';
       return summary.includes(clientName) || desc.includes(clientName) || attendees.includes(clientName);
     });
@@ -403,16 +412,16 @@ function runLocalReasoning(emails, meetings, notion) {
 
   // 6. Generate Executive Summary dynamically from real data
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const totalEmails   = emails.length;
-  const urgentCount   = briefing.urgentEmails.length;
-  const meetingCount  = briefing.todaySchedule.length;
+  const totalEmails = emails.length;
+  const urgentCount = briefing.urgentEmails.length;
+  const meetingCount = briefing.todaySchedule.length;
   const conflictCount = briefing.conflicts.length;
   const priorityCount = briefing.priorities.length;
 
   const summaryParts = [
     `Good morning. Today is ${today}.`,
-    totalEmails > 0   ? `Your inbox has ${totalEmails} recent message(s)${urgentCount > 0 ? `, including ${urgentCount} marked urgent` : ''}.` : 'Your inbox is quiet.',
-    meetingCount > 0  ? `You have ${meetingCount} meeting(s) on your calendar today.` : 'No meetings scheduled today.',
+    totalEmails > 0 ? `Your inbox has ${totalEmails} recent message(s)${urgentCount > 0 ? `, including ${urgentCount} marked urgent` : ''}.` : 'Your inbox is quiet.',
+    meetingCount > 0 ? `You have ${meetingCount} meeting(s) on your calendar today.` : 'No meetings scheduled today.',
     conflictCount > 0 ? `⚠️ ${conflictCount} schedule conflict(s) detected — review your calendar.` : '',
     priorityCount > 0 ? `${priorityCount} priority item(s) identified across your email, calendar, and notes.` : 'No cross-source priorities identified.',
   ].filter(Boolean);
@@ -510,7 +519,7 @@ function callGeminiReasoning(apiKey, emails, meetings, notion) {
 
     const options = {
       hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -567,7 +576,7 @@ const server = http.createServer(async (req, res) => {
     }
     serveStaticFile(res, fullPath);
   }
-  
+
   // API: Get Daily Briefing
   else if (method === 'GET' && url.startsWith('/api/briefing')) {
     try {
@@ -633,7 +642,14 @@ const server = http.createServer(async (req, res) => {
           }
 
           // 2. Fetch Google Calendar events
-          const calRes = await execSwytchcode('calendar.event.get', { calendarId: 'primary' });
+          const timeMin = new Date();
+          timeMin.setHours(0, 0, 0, 0);
+          const calRes = await execSwytchcode('calendar.event.get', {
+            calendarId: 'primary',
+            timeMin: timeMin.toISOString(),
+            singleEvents: true,
+            orderBy: 'startTime'
+          });
           meetings = calRes && calRes.items ? calRes.items : [];
         } catch (swError) {
           console.error("[Swytchcode Execution Failed] Falling back to Demo Data:", swError);
@@ -677,30 +693,29 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      if (DEMO_MODE) {
+      if (RESEND_API_KEY) {
+        console.log(`[Server] Sending email to ${recipient} via Swytchcode Resend`);
+        // Use resend.email.create
+        // Returns: { id: string }
+        const sendArgs = {
+          "Authorization": `Bearer ${RESEND_API_KEY}`,
+          body: {
+            from: 'onboarding@resend.dev', // Resend default domain sender for sandbox/onboarding
+            to: recipient,
+            subject: 'Daily Executive Assistant Briefing',
+            html: briefingHtml
+          }
+        };
+        const result = await execSwytchcode('resend.email.create', sendArgs);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Email sent successfully via Resend API', detail: result }));
+      } else if (DEMO_MODE) {
         console.log(`[Demo] Simulating sending briefing email to ${recipient}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: `[DEMO] Briefing successfully emailed to ${recipient}` }));
       } else {
-        if (RESEND_API_KEY) {
-          console.log(`[Server] Sending email to ${recipient} via Swytchcode Resend`);
-          // Use resend.email.create
-          // Returns: { id: string }
-          const sendArgs = {
-            "Authorization": `Bearer ${RESEND_API_KEY}`,
-            body: {
-              from: 'onboarding@resend.dev', // Resend default domain sender for sandbox/onboarding
-              to: recipient,
-              subject: 'Daily Executive Assistant Briefing',
-              html: briefingHtml
-            }
-          };
-          const result = await execSwytchcode('resend.email.create', sendArgs);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, message: 'Email sent successfully via Resend API', detail: result }));
-        } else {
-          console.log(`[Server] Sending email to ${recipient} via Swytchcode Gmail`);
-          
+        console.log(`[Server] Sending email to ${recipient} via Swytchcode Gmail`);
+
           // Assemble raw RFC 2822 email payload
           const emailLines = [
             `To: ${recipient}`,
@@ -721,6 +736,9 @@ const server = http.createServer(async (req, res) => {
           // Call Gmail API send message
           const sendArgs = {
             userId: 'me',
+            headers: {
+              "Content-Type": "application/json"
+            },
             body: {
               raw: rawBase64
             }
@@ -730,7 +748,6 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, message: 'Email sent successfully via Gmail API', detail: result }));
         }
-      }
     } catch (err) {
       console.error("[API Error] Failed to send email:", err);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -748,7 +765,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(` ✨ Aegis AI Executive Assistant`);
   console.log(` 🚀 Running at: http://localhost:${PORT}`);
   console.log(` 🎯 Mode: ${DEMO_MODE ? 'DEMO (offline)' : 'LIVE (Swytchcode)'}`);
-  console.log(` 🤖 AI Engine: ${GEMINI_API_KEY ? 'Gemini 2.5 Flash' : 'Local Semantic Reasoner'}`);
+  console.log(` 🤖 AI Engine: ${GEMINI_API_KEY ? 'Gemini 1.5 Flash' : 'Local Semantic Reasoner'}`);
   console.log(`==================================================`);
 });
 
