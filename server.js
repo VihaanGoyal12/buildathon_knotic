@@ -108,7 +108,8 @@ function execSwytchcode(tool, args) {
         .join('\n')
         .trim();
       try {
-        resolve(JSON.parse(cleanedStdout));
+        const parsed = JSON.parse(cleanedStdout);
+        resolve(parsed.hasOwnProperty('data') ? parsed.data : parsed);
       } catch (parseError) {
         console.warn(`[Swytchcode Warn] Failed to parse JSON stdout: ${cleanedStdout}`);
         resolve({ raw: cleanedStdout, stderr });
@@ -519,7 +520,7 @@ function callGeminiReasoning(apiKey, emails, meetings, notion) {
 
     const options = {
       hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      path: `/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
