@@ -54,6 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const renderBriefing = (data) => {
     currentBriefingData = data;
 
+    // Pre-populate email input with user's real email if available
+    if (data.userEmail && (!emailInput.value || emailInput.value === 'executive@example.com')) {
+      emailInput.value = data.userEmail;
+    }
+
     // 1. Executive Summary
     execSummary.textContent = data.executiveSummary || "No summary generated for today.";
 

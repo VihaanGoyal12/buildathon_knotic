@@ -129,6 +129,99 @@ function execSwytchcode(tool, args) {
   });
 }
 
+// Helper: Extract Notion page title from properties schema
+function getPageTitle(page) {
+  if (page.properties) {
+    for (const key of Object.keys(page.properties)) {
+      const prop = page.properties[key];
+      if (prop.type === 'title' && prop.title && prop.title.length > 0) {
+        return prop.title.map(t => t.plain_text).join('');
+      }
+    }
+  }
+  return "Untitled Page";
+}
+
+// Helper: Fetch Notion pages and render them as live notes & tasks context
+async function fetchLiveNotionContext() {
+  try {
+    console.log("[Notion] Fetching live pages from search...");
+    const searchRes = await execSwytchcode('notion.search.create', {
+      body: {
+        page_size: 15
+      }
+    });
+
+    const pages = searchRes && searchRes.results ? searchRes.results : [];
+    console.log(`[Notion] Found ${pages.length} pages/databases.`);
+
+    const clients = [];
+    const projects = [];
+
+    for (const page of pages) {
+      if (page.object !== 'page') continue; // only process pages
+
+      const pageId = page.id;
+      const title = getPageTitle(page);
+      
+      console.log(`[Notion] Fetching markdown for page: "${title}" (${pageId})`);
+      let markdown = "";
+      try {
+        const mdRes = await execSwytchcode('notion.markdown.get', {
+          page_id: pageId,
+          'Notion-Version': '2022-06-28'
+        });
+        markdown = mdRes && mdRes.markdown ? mdRes.markdown : "";
+      } catch (mdErr) {
+        console.warn(`[Notion Warn] Could not fetch markdown for page ${pageId}:`, mdErr.message || mdErr);
+      }
+
+      // Check if this page contains tasks (lines with "- [ ]")
+      const tasks = [];
+      const lines = markdown.split('\n');
+      lines.forEach(line => {
+        const match = line.match(/^[\s\t]*- \[\s\]\s*(.*)/);
+        if (match) {
+          tasks.push(match[1].trim());
+        }
+      });
+
+      // Construct a "client" context representation for this page
+      clients.push({
+        id: `live_page_${pageId.replace(/-/g, '_')}`,
+        name: title,
+        priority: title.toLowerCase().includes('high') ? 'High' : 'Medium',
+        notes: markdown.substring(0, 800) + (markdown.length > 800 ? '...' : ''),
+        contactPerson: 'Notion Workspace',
+        projects: tasks
+      });
+
+      // Map any checklist todo items to projects representing live tasks!
+      tasks.forEach((task, idx) => {
+        projects.push({
+          id: `live_task_${pageId.replace(/-/g, '_')}_${idx}`,
+          name: task,
+          status: 'In Progress',
+          dueDate: new Date().toISOString().split('T')[0], // Today
+          summary: `Task from page "${title}": ${task}`
+        });
+      });
+    }
+
+    return {
+      clients,
+      projects,
+      preferences: {
+        briefingTime: "08:00 AM",
+        focusAreas: clients.map(c => c.name)
+      }
+    };
+  } catch (err) {
+    console.error("[Notion Error] Failed to fetch live Notion context:", err);
+    throw err;
+  }
+}
+
 // 2. Demo / Mock Data (For offline sandbox or demo mode fallback)
 const DEMO_GMAIL_DATA = [
   {
@@ -329,7 +422,22 @@ function runLocalReasoning(emails, meetings, notion) {
       'critical', 'deadline', 'overdue', 'follow up', 'follow-up',
       'important', 'time sensitive', 'time-sensitive', 'priority'
     ];
-    if (urgencyKeywords.some(kw => lowerSub.includes(kw) || lowerText.includes(kw))) {
+    
+    // Check if it is a newsletter, promotional, or spam email
+    const isPromotionalOrSpam = 
+      (msg.labelIds && msg.labelIds.some(l => 
+        ['CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_UPDATES', 'CATEGORY_FORUMS', 'SPAM', 'TRASH'].includes(l)
+      )) ||
+      lowerText.includes('unsubscribe') ||
+      from.toLowerCase().includes('newsletter') ||
+      from.toLowerCase().includes('promo') ||
+      from.toLowerCase().includes('marketing') ||
+      from.toLowerCase().includes('no-reply') ||
+      from.toLowerCase().includes('noreply') ||
+      from.toLowerCase().includes('notification') ||
+      subject.toLowerCase().includes('unsubscribe');
+
+    if (!isPromotionalOrSpam && urgencyKeywords.some(kw => lowerSub.includes(kw) || lowerText.includes(kw))) {
       emailObj.isUrgent = true;
       briefing.urgentEmails.push(emailObj);
     }
@@ -413,6 +521,37 @@ function runLocalReasoning(emails, meetings, notion) {
         recommendedAction: `Review and respond to the urgent email from ${emailObj.from} as soon as possible.`
       });
       briefing.recommendedActions.push(`Respond to urgent email: "${emailObj.subject}" from ${emailObj.from}.`);
+    }
+  });
+
+  // 5b. Surface important/urgent meetings as standalone priorities
+  meetings.forEach(evt => {
+    const summary = evt.summary || '';
+    const description = evt.description || '';
+    const lowerSub = summary.toLowerCase();
+    const lowerDesc = description.toLowerCase();
+    const importanceKeywords = [
+      'urgent', 'asap', 'blocker', 'action required', 'immediately',
+      'critical', 'deadline', 'overdue', 'important', 'priority', 'key'
+    ];
+    if (importanceKeywords.some(kw => lowerSub.includes(kw) || lowerDesc.includes(kw))) {
+      const alreadyLinked = briefing.priorities.some(p => p.relatedMeeting === summary);
+      if (!alreadyLinked) {
+        // Determine severity level
+        const isHighSeverity = ['urgent', 'asap', 'blocker', 'immediately', 'critical'].some(kw => 
+          lowerSub.includes(kw) || lowerDesc.includes(kw)
+        );
+        briefing.priorities.push({
+          title: `Priority Meeting: ${summary}`,
+          level: isHighSeverity ? 'High' : 'Medium',
+          notionContext: '',
+          relatedEmail: null,
+          relatedMeeting: summary,
+          description: `Scheduled calendar event. Description: "${description || 'No description provided.'}"`,
+          recommendedAction: `Prepare notes and review agenda for "${summary}".`
+        });
+        briefing.recommendedActions.push(`Attend important meeting: "${summary}".`);
+      }
     }
   });
 
@@ -596,22 +735,28 @@ const server = http.createServer(async (req, res) => {
       let meetings = [];
       let notion = {};
 
-      // A. Load Notion context (from local JSON file)
-      const notionPath = path.join(__dirname, 'data', 'notion_context.json');
-      if (fs.existsSync(notionPath)) {
-        notion = JSON.parse(fs.readFileSync(notionPath, 'utf8'));
+      // A. Load Notion context (from local JSON file or Live API)
+      if (DEMO_MODE) {
+        console.log("[Server] Serving Demo Notion Context");
+        const notionPath = path.join(__dirname, 'data', 'notion_context.json');
+        if (fs.existsSync(notionPath)) {
+          notion = JSON.parse(fs.readFileSync(notionPath, 'utf8'));
+        } else {
+          notion = { clients: [], projects: [], preferences: {} };
+        }
       } else {
-        notion = { clients: [], projects: [], preferences: {} };
-      }
-
-      // Check Notion integration connectivity in Live Mode
-      if (!DEMO_MODE) {
         try {
-          console.log("[Server] Verifying Notion integration connectivity...");
-          const botUser = await execSwytchcode('notion.me.list', {});
-          console.log(`[Server] Notion Connected! Bot name: ${botUser.name || 'Unknown'}`);
+          console.log("[Server] Loading live Notion context via Swytchcode...");
+          notion = await fetchLiveNotionContext();
+          console.log(`[Server] Live Notion context loaded: ${notion.clients.length} clients/pages, ${notion.projects.length} tasks/projects.`);
         } catch (notionErr) {
-          console.warn("[Server Warn] Notion integration connectivity check failed:", notionErr.message || notionErr);
+          console.error("[Notion Live Load Failed] Falling back to local notion_context.json:", notionErr.message || notionErr);
+          const notionPath = path.join(__dirname, 'data', 'notion_context.json');
+          if (fs.existsSync(notionPath)) {
+            notion = JSON.parse(fs.readFileSync(notionPath, 'utf8'));
+          } else {
+            notion = { clients: [], projects: [], preferences: {} };
+          }
         }
       }
 
@@ -628,8 +773,7 @@ const server = http.createServer(async (req, res) => {
           const listRes = await execSwytchcode('gmail.user.messages.get', {
             userId: 'me',
             maxResults: 15,
-            // Fetch from INBOX only (excludes spam/trash)
-            labelIds: ['INBOX']
+            q: 'is:inbox'
           });
           if (listRes && listRes.messages && listRes.messages.length > 0) {
             console.log(`[Gmail] Found ${listRes.messages.length} messages. Fetching full details...`);
@@ -690,6 +834,20 @@ const server = http.createServer(async (req, res) => {
       } else {
         briefingResult = runLocalReasoning(emails, meetings, notion);
       }
+
+      // Query Notion to pre-populate user's real email address if possible
+      let userEmail = '';
+      if (!DEMO_MODE) {
+        try {
+          const botUser = await execSwytchcode('notion.me.list', {});
+          if (botUser && botUser.bot && botUser.bot.owner && botUser.bot.owner.person) {
+            userEmail = botUser.bot.owner.person.email || '';
+          }
+        } catch (emailFetchErr) {
+          // Ignore and default to empty
+        }
+      }
+      briefingResult.userEmail = userEmail;
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(briefingResult));
