@@ -109,6 +109,17 @@ function execSwytchcode(tool, args) {
         .trim();
       try {
         const parsed = JSON.parse(cleanedStdout);
+        if (parsed.error) {
+          console.error(`[Swytchcode Error] Tool: ${tool}, Error:`, parsed.error);
+          return reject({ error: parsed.error, stderr, stdout });
+        }
+        if (parsed.status_code && parsed.status_code >= 400) {
+          console.error(`[Swytchcode Error] Tool: ${tool}, Status Code: ${parsed.status_code}`);
+          const errorMsg = parsed.data && parsed.data.error && parsed.data.error.message
+            ? parsed.data.error.message
+            : `API error (${parsed.status_code})`;
+          return reject({ error: errorMsg, stderr, stdout });
+        }
         resolve(parsed.hasOwnProperty('data') ? parsed.data : parsed);
       } catch (parseError) {
         console.warn(`[Swytchcode Warn] Failed to parse JSON stdout: ${cleanedStdout}`);
@@ -611,8 +622,9 @@ const server = http.createServer(async (req, res) => {
         meetings = DEMO_CALENDAR_DATA;
       } else {
         console.log("[Server] Invoking Swytchcode CLI Subprocesses");
+        
+        // 1. Fetch Gmail messages — list first, then fetch each with full format
         try {
-          // 1. Fetch Gmail messages — list first, then fetch each with full format
           const listRes = await execSwytchcode('gmail.user.messages.get', {
             userId: 'me',
             maxResults: 15,
@@ -641,8 +653,14 @@ const server = http.createServer(async (req, res) => {
             console.log('[Gmail] Inbox is empty or no messages returned.');
             emails = [];
           }
+        } catch (swError) {
+          console.error("[Gmail Swytchcode Execution Failed] Falling back to Demo Gmail Data:", swError);
+          // Auto fallback to demo gmail data if Gmail Swytchcode calls fail
+          emails = DEMO_GMAIL_DATA;
+        }
 
-          // 2. Fetch Google Calendar events
+        // 2. Fetch Google Calendar events
+        try {
           const timeMin = new Date();
           timeMin.setHours(0, 0, 0, 0);
           const calRes = await execSwytchcode('calendar.event.get', {
@@ -652,10 +670,10 @@ const server = http.createServer(async (req, res) => {
             orderBy: 'startTime'
           });
           meetings = calRes && calRes.items ? calRes.items : [];
+          console.log(`[Calendar] Successfully fetched ${meetings.length} meetings.`);
         } catch (swError) {
-          console.error("[Swytchcode Execution Failed] Falling back to Demo Data:", swError);
-          // Auto fallback to demo data if Swytchcode calls fail
-          emails = DEMO_GMAIL_DATA;
+          console.error("[Calendar Swytchcode Execution Failed] Falling back to Demo Calendar Data:", swError);
+          // Auto fallback to demo calendar data if Calendar Swytchcode calls fail
           meetings = DEMO_CALENDAR_DATA;
         }
       }
